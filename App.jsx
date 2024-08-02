@@ -6,10 +6,13 @@ import React, { useCallback, useEffect } from 'react';
 import Home from './screens/Home';
 import Unsplash from './screens/Unsplash';
 import Login from './screens/Login';
-import Abimes from './screens/Abimes';
 import { connectDatabase, createTables, getTableNames } from './db/db';
 import Sync from './screens/Sync';
 import { getProducts } from './db/produits';
+import Abimes2 from './screens/Abimes/Abimes2';
+import Abimes1 from './screens/Abimes/Abimes1';
+import Abimes3 from './screens/Abimes/Abimes3';
+
 
 const Stack = createNativeStackNavigator();
 
@@ -51,9 +54,40 @@ function App() {
           component={Login}
           options={{headerShown: false}}
         />
+
         <Stack.Screen
-          name="Abimes"
-          component={Abimes}
+          name="Abimes1"
+          component={Abimes1}
+          options={{
+            title: 'Abimes',
+            headerStyle: {
+              backgroundColor: '#d32f2f',
+            },
+            headerTintColor: '#fff',
+            headerTitleStyle: {
+              fontWeight: 'bold',
+            },
+
+          }}
+        />
+        <Stack.Screen
+          name="Abimes2"
+          component={Abimes2}
+          options={{
+            title: 'Abimes',
+            headerStyle: {
+              backgroundColor: '#d32f2f',
+            },
+            headerTintColor: '#fff',
+            headerTitleStyle: {
+              fontWeight: 'bold',
+            },
+
+          }}
+        />
+        <Stack.Screen
+          name="Abimes3"
+          component={Abimes3}
           options={{
             title: 'Abimes',
             headerStyle: {

@@ -1,14 +1,15 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, Image, Alert, StyleSheet, Modal } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Bar } from 'react-native-progress';
 import { connectDatabase } from '../db/db';
 import { createProduct, deleteAllProducts } from '../db/produits';
 import { createFDX, deleteAllFDX } from '../db/fdx';
+import NetInfo from '@react-native-community/netinfo';
 
 const base_url = 'http://10.0.0.250:8075/tbg/suivi_fdx/api';
 
-const Sync = () => {
+const Sync = ({route, navigation}) => {
   const [isLoading, setIsLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [modalVisible, setModalVisible] = useState(false);
@@ -65,6 +66,20 @@ const Sync = () => {
     }
   };
 
+  useEffect(() => {
+    const unsubscribe = NetInfo.addEventListener(state => {
+      console.log('Connection type', state.type);
+      console.log('Is connected?', state.isConnected);
+      if (!state.isConnected) {
+        Alert.alert('Erreur', 'Pas de connexion internet');
+        navigation.goBack();
+      }
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
   const handleSyncFDX = async () => {
     const token = await AsyncStorage.getItem('userToken');
     setIsLoading(true);
@@ -89,12 +104,15 @@ const Sync = () => {
     
         const json = await res.json();
         const totalFDX = json.length;
+        console.log(json.length);
+ 
         let insertedCount = 0;
         await deleteAllFDX(db);
     
         for (const fdx of json) {
             try {
-            await createFDX(db, fdx);
+            result = await createFDX(db, fdx);
+            console.log(result);
             insertedCount++;
             setProgress(insertedCount / totalFDX);
             } catch (error) {
@@ -130,7 +148,9 @@ const Sync = () => {
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <Text style={styles.modalText}>Synchronisation en cours...</Text>
+            <Text style={styles.modalText}>{Math.round(progress * 100)}%</Text>
             <Bar progress={progress} width={200} color="#d32f2f" />
+            <Text style={styles.smallText}>Merci de ne pas quitter cette ecran</Text>
           </View>
         </View>
       </Modal>
@@ -182,6 +202,10 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     fontSize: 16,
     color: '#333',
+  },
+  smallText: {
+    fontSize: 12,
+    color: '#777',
   },
 });
 

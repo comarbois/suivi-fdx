@@ -73,7 +73,7 @@ const Home = ({route, navigation}) => {
       color: '#FF4500',
       members: 8,
       image: require('../assets/abimes.png'),
-      view: 'Abimes',
+      view: 'Abimes1',
     },
     {
       id: 2,
@@ -81,7 +81,7 @@ const Home = ({route, navigation}) => {
       color: '#FF4500',
       members: 8,
       image: require('../assets/list.png'),
-      view: 'Abimes',
+      view: 'Abimes1',
     },
     {
       id: 3,

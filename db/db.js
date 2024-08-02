@@ -22,7 +22,7 @@ export const connectDatabase = async() => {
 export const createTables = async (db) => {
   const productsQuerey = `
         CREATE TABLE IF NOT EXISTS list_produits_inv (
-            idProduit INTEGER PRIMARY KEY ,
+            idProduit INTEGER,
             designation TEXT,
             unit_vente TEXT,
             unit_achat TEXT,
@@ -43,11 +43,13 @@ export const createTables = async (db) => {
             idProduit INTEGER ,
             designation TEXT,
             unite TEXT,
-            quantite DOUBLE,
             num_lot TEXT,
             solde DOUBLE,
             solde_p DOUBLE,
-            fournisseur TEXT
+            fournisseur TEXT,
+            qualite TEXT,
+            categorie TEXT,
+            famille TEXT
         )`;
     
 const cassesQuery = `

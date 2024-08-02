@@ -31,6 +31,39 @@ export const getProducts = async db => {
   const products = [];
   try {
     const results = await db.executeSql(query);
+    
+    results?.forEach(result => {
+      for (let index = 0; index < result.rows.length; index++) {
+        products.push(result.rows.item(index));
+      }
+    });
+    return products;
+  } catch (error) {
+    console.error(error);
+    throw new Error(error);
+  }
+};
+
+export const getProductsFiltered = async (db, filters) => {
+  let chaine = '';
+  if (filters.famille != '' && filters.famille != null) {
+    chaine = `AND famille = '${filters.famille}'`;
+  }
+  if (filters.categorie != '' && filters.categorie != null) {
+    chaine = chaine + ` AND categorie = '${filters.categorie}'`;
+  }
+  if (filters.fournisseur != '' && filters.fournisseur != null) {
+    chaine = chaine + ` AND fournisseur = '${filters.fournisseur}'`;
+  }
+  if (filters.qualite != '' && filters.qualite != null) {
+    chaine = chaine + ` AND qualite = '${filters.qualite}'`;
+  }
+  const query = `SELECT * FROM list_produits_inv WHERE 1 ${chaine}`;
+
+  const products = [];
+  try {
+    const results = await db.executeSql(query);
+    console.log(results);
     results?.forEach(result => {
       for (let index = 0; index < result.rows.length; index++) {
         products.push(result.rows.item(index));
@@ -134,7 +167,7 @@ export const getProductsQualites = async (db, famille, categorie, fournisseur) =
     chaine = chaine + ` AND fournisseur = '${fournisseur}'`;
   }
 
-  query = `SELECT DISTINCT qualite FROM list_produits_inv WHERE 1 ${chaine} ORDER BY qualite`;
+  query = `SELECT DISTINCT qualite FROM list_produits_inv WHERE qualite IS NOT NULL AND qualite != '' ${chaine} ORDER BY qualite`;
   const products = [];
   try {
     const results = await db.executeSql(query);
@@ -150,4 +183,23 @@ export const getProductsQualites = async (db, famille, categorie, fournisseur) =
     throw new Error(error);
   }
 };
+
+export const getProductsUnites = async db => {
+  query = `SELECT DISTINCT unit_vente as unite FROM list_produits_inv ORDER BY unit_vente`;
+  const products = [];
+  try {
+    const results = await db.executeSql(query);
+    results?.forEach(result => {
+      for (let index = 0; index < result.rows.length; index++) {
+        products.push(result.rows.item(index));
+      }
+    });
+
+    return products;
+  } catch (error) {
+    console.error(error);
+    throw new Error(error);
+  }
+}
+
 

@@ -4,32 +4,31 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {verifyToken} from '../hooks/verifyToken';
+import {verifyToken} from '../../hooks/verifyToken';
 import {Dropdown} from 'react-native-element-dropdown';
-import {connectDatabase} from '../db/db';
+import {connectDatabase} from '../../db/db';
 import {
   getProductsCategories,
   getProductsFamille,
   getProductsFournisseurs,
   getProductsQualites,
-} from '../db/produits';
+} from '../../db/produits';
 
-const base_url = 'http://10.0.0.250:8075/tbg/suivi_fdx/api';
-const movements = [
-  {id: 1, nom: 'Entrer'},
-  {id: 2, nom: 'Sortie'},
-];
 
-const Abimes = ({route, navigation}) => {
+
+
+
+
+const Abimes2 = ({route, navigation}) => {
   const [isLoading, setIsLoading] = useState(false);
   const [user, setUser] = useState({});
-  const [depots, setDepots] = useState([]);
-  const [selectedDepot, setSelectedDepot] = useState(0);
-  const [selectedMovement, setSelectedMovement] = useState('');
+
+
 
   const [familles, setFamilles] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -39,6 +38,7 @@ const Abimes = ({route, navigation}) => {
   const [selectedCategorie, setSelectedCategorie] = useState('');
   const [selectedFournisseur, setSelectedFournisseur] = useState('');
   const [selectedQualite, setSelectedQualite] = useState('');
+  const [typeStock, setTypeStock] = useState('');
 
   const checkLogin = async () => {
     setIsLoading(true);
@@ -50,36 +50,6 @@ const Abimes = ({route, navigation}) => {
       navigation.navigate('Login');
     }
     setIsLoading(false);
-  };
-
-  const fetchDepots = async () => {
-    const token = await AsyncStorage.getItem('userToken');
-    const res = await fetch(`${base_url}/depots/list`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    if (res.status === 401) {
-      Alert.alert('Erreur', 'Session expirée, veuillez vous reconnecter', [
-        {
-          text: 'Ok',
-          onPress: () => {
-            AsyncStorage.clear()
-              .then(() => {
-                navigation.navigate('Login');
-              })
-              .catch(error => {
-                console.error('Error clearing AsyncStorage:', error);
-              });
-          },
-        },
-      ]);
-    }
-    const json = await res.json();
-    setDepots(json.depots);
   };
 
   const fetchFamilles = async () => {
@@ -111,7 +81,6 @@ const Abimes = ({route, navigation}) => {
         selectedFamille,
         selectedCategorie,
       );
-      console.log(fournisseurs);
       setFournisseurs(fournisseurs);
     } catch (err) {
       console.log(err);
@@ -134,19 +103,50 @@ const Abimes = ({route, navigation}) => {
     }
   };
 
+  const handleSuivant = () => {
+    if (selectedFamille == '') {
+      Alert.alert('Erreur', 'Le champ Famille est obligatoire !');
+      return;
+    }
+    if (selectedCategorie == '') {
+      Alert.alert('Erreur', 'Le champ Categorie est obligatoire !');
+      return;
+    }
+
+
+    const {depot, movement} = route.params;
+    console.log('depot', depot);
+    console.log('movement', movement);
+
+    const filters = { 
+      depot: depot,
+      movement: movement,
+      famille: selectedFamille,
+      categorie: selectedCategorie,
+      fournisseur: selectedFournisseur,
+      qualite: selectedQualite,
+      type_stock: typeStock,
+    };
+
+
+    navigation.navigate('Abimes3', {filters: filters});
+
+
+    
+
+
+  }
+
   useEffect(() => {
     checkLogin();
-
     const fetchData = async () => {
       setIsLoading(true);
-      await fetchDepots();
       await fetchFamilles();
       await fetchCategories();
       await fetchFournisseurs();
       await fetchQualites();
       setIsLoading(false);
     };
-
     fetchData();
   }, []);
 
@@ -162,7 +162,6 @@ const Abimes = ({route, navigation}) => {
   }, [selectedFamille]);
 
   useEffect(() => {
-    console.log(selectedCategorie);
     const fetchData = async () => {
       await fetchFournisseurs();
       await fetchQualites();
@@ -186,33 +185,7 @@ const Abimes = ({route, navigation}) => {
       <ActivityIndicator size="large" color="#0000ff" />
     </View>
   ) : (
-    <ScrollView style={styles.container}>
-      <Text style={styles.label}>Depot</Text>
-      <Dropdown
-        data={depots}
-        labelField="nom"
-        valueField="id"
-        onChange={value => {
-          setSelectedDepot(value.id);
-        }}
-        search
-        searchField={['nom']}
-        searchPlaceholder="Rechercher un depot"
-        placeholder="Selectionner un depot"
-        style={styles.dropdown}
-      />
-      <Text style={styles.label}>Mouvement</Text>
-      <Dropdown
-        data={movements}
-        labelField="nom"
-        valueField={'nom'}
-        onChange={value => {
-          setSelectedMovement(value.nom);
-        }}
-        placeholder="Selectionner un mouvement"
-        style={styles.dropdown}
-      />
-
+    <View style={styles.container}>
       <Text style={styles.label}>Famille</Text>
       <Dropdown
         data={familles}
@@ -235,6 +208,7 @@ const Abimes = ({route, navigation}) => {
         valueField={'categorie'}
         onChange={value => {
           setSelectedCategorie(value.categorie);
+          setTypeStock(value.type_stock);
           console.log(value);
         }}
         placeholder="Selectionner une categorie"
@@ -259,6 +233,7 @@ const Abimes = ({route, navigation}) => {
         searchField={['fournisseur']}
         searchPlaceholder="Rechercher un fournisseur"
       />
+
       <Text style={styles.label}>Qualite</Text>
       <Dropdown
         data={qualites}
@@ -273,19 +248,26 @@ const Abimes = ({route, navigation}) => {
         search
         searchField={['qualite']}
         searchPlaceholder="Rechercher une qualite"
-        dropdownPosition='top'
       />
-    </ScrollView>
+
+
+      <TouchableOpacity style={styles.button} onPress={handleSuivant} >
+        <Text style={styles.buttonText}>Suivant</Text>
+      </TouchableOpacity>
+      
+    </View>
   );
 };
 
-export default Abimes;
+export default Abimes2;
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 10,
     backgroundColor: '#fefefe',
+    height: '100%',
+
   },
   label: {
     fontSize: 12,
@@ -302,5 +284,23 @@ const styles = StyleSheet.create({
     marginTop: 10,
     padding: 10,
     color: 'black',
+  },
+
+  button: {
+    backgroundColor: '#2e64e5',
+    padding: 10,
+    borderRadius: 5,
+    marginTop: 40,
+    alignItems: 'center',
+    position: 'absolute',
+    bottom: 1,
+    left: 0,
+    right: 0,
+
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
 });
