@@ -5,8 +5,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {connectDatabase} from '../db/db';
 
 const movements = [
-  {id: 1, nom: 'Entrer'},
-  {id: 2, nom: 'Sortie'},
+  {id: 1, nom: 'Entré', val : 'me'},
+  {id: 2, nom: 'Sorti', val : 'ms'},
 ];
 
 const depots = [
@@ -60,7 +60,7 @@ const Abimes1 = ({route, navigation}) => {
         labelField="nom"
         valueField={'nom'}
         onChange={value => {
-          setSelectedMovement(value.nom);
+          setSelectedMovement(value.val);
         }}
         placeholder="Selectionner un mouvement"
         style={styles.dropdown}
@@ -99,15 +99,15 @@ const styles = StyleSheet.create({
   },
 
   button: {
-    backgroundColor: '#2e64e5',
+    backgroundColor: '#d32f2f',
     padding: 10,
     borderRadius: 5,
-
-    alignItems: 'center',
+    width: '80%',
+    alignSelf: 'center',
     position: 'absolute',
-    bottom: 1,
-    left: 0,
-    right: 0,
+    bottom: 40,
+    alignItems: 'center',
+    
   },
   buttonText: {
     color: '#fff',

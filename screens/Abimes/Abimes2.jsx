@@ -287,16 +287,15 @@ const styles = StyleSheet.create({
   },
 
   button: {
-    backgroundColor: '#2e64e5',
+    backgroundColor: '#d32f2f',
     padding: 10,
     borderRadius: 5,
-    marginTop: 40,
-    alignItems: 'center',
+    width: '80%',
+    alignSelf: 'center',
     position: 'absolute',
-    bottom: 1,
-    left: 0,
-    right: 0,
-
+    bottom: 40,
+    alignItems: 'center',
+    
   },
   buttonText: {
     color: '#fff',

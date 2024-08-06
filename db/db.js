@@ -75,11 +75,19 @@ const cassesQuery = `
                 envoye INTEGER
             )`;
 
+  const casseImagesQuery = `
+            CREATE TABLE IF NOT EXISTS casse_images(
+                id INTEGER PRIMARY KEY,
+                idCasse INTEGER,
+                uri TEXT
+            )`;
+              
 
   try {
     await db.executeSql(productsQuerey);
     await db.executeSql(fdxQuery);
     await db.executeSql(cassesQuery);
+    await db.executeSql(casseImagesQuery);
     console.log('Tables created');
   } catch (error) {
     console.error(error);
@@ -105,4 +113,64 @@ export const getTableNames = async (db) => {
     }
 }
 
+
+// Function to begin a transaction
+export const beginTransaction = async (db) => {
+  return new Promise((resolve, reject) => {
+    db.transaction(tx => {
+      tx.executeSql(
+        'BEGIN TRANSACTION;',
+        [],
+        () => {
+          console.log('Transaction started');
+          resolve();
+        },
+        (_, error) => {
+          console.error('Error starting transaction:', error);
+          reject(error);
+        }
+      );
+    });
+  });
+};
+
+// Function to commit a transaction
+export const commitTransaction = async (db) => {
+  return new Promise((resolve, reject) => {
+    db.transaction(tx => {
+      tx.executeSql(
+        'COMMIT;',
+        [],
+        () => {
+          console.log('Transaction committed');
+          resolve();
+        },
+        (_, error) => {
+          console.error('Error committing transaction:', error);
+          reject(error);
+        }
+      );
+    });
+  });
+};
+
+// Function to rollback a transaction
+export const rollbackTransaction = async (db) => {
+  return new Promise((resolve, reject) => {
+    db.transaction(tx => {
+      tx.executeSql(
+        'ROLLBACK;',
+        [],
+        () => {
+          console.log('Transaction rolled back');
+          resolve();
+        },
+        (_, error) => {
+          console.error('Error rolling back transaction:', error);
+          reject(error);
+        }
+      );
+    });
+  });
+};
 // Compare this snippet from screens/Unsplash.jsx:

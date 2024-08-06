@@ -3,7 +3,7 @@ export const createProduct = async (db, product) => {
                        VALUES (?,?,? ,?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)`;
   try {
     const result = await db.executeSql(query, [
-      product.idProduct,
+      product.idProduit,
       product.designation,
       product.unit_vente,
       product.unit_achat,

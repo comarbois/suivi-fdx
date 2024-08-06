@@ -46,7 +46,6 @@ export const getFDXFiltered = async (db, filters) => {
   const fdx = [];
   try {
     const results = await db.executeSql(query);
-    console.log(results);
     results?.forEach(result => {
       for (let index = 0; index < result.rows.length; index++) {
         fdx.push(result.rows.item(index));
@@ -80,7 +79,6 @@ export const deleteAllFDX = async db => {
   const query = `DELETE FROM list_fdx_inv`;
   try {
     const result = await db.executeSql(query);
-    console.log(result);
     return result;
   } catch (error) {
     console.error(error);

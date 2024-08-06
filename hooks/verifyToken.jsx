@@ -7,7 +7,7 @@ export const verifyToken = async () => {
   }
   
   const res = await fetch(
-    "http://10.0.0.250:8075/tbg/suivi_fdx/api/authentification/verifyToken",
+    "https://tbg.comarbois.ma/suivi_fdx/api/authentification/verifyToken",
     {
       method: "GET",
       headers: {

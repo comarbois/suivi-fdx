@@ -1,13 +1,21 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, Image, Alert, StyleSheet, Modal } from 'react-native';
+import React, {useEffect, useState} from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Image,
+  Alert,
+  StyleSheet,
+  Modal,
+} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Bar } from 'react-native-progress';
-import { connectDatabase } from '../db/db';
-import { createProduct, deleteAllProducts } from '../db/produits';
-import { createFDX, deleteAllFDX } from '../db/fdx';
+import {Bar} from 'react-native-progress';
+import {connectDatabase} from '../db/db';
+import {createProduct, deleteAllProducts} from '../db/produits';
+import {createFDX, deleteAllFDX} from '../db/fdx';
 import NetInfo from '@react-native-community/netinfo';
 
-const base_url = 'http://10.0.0.250:8075/tbg/suivi_fdx/api';
+const base_url = 'https://tbg.comarbois.ma/suivi_fdx/api';
 
 const Sync = ({route, navigation}) => {
   const [isLoading, setIsLoading] = useState(false);
@@ -15,44 +23,47 @@ const Sync = ({route, navigation}) => {
   const [modalVisible, setModalVisible] = useState(false);
 
   const handleSyncProducts = async () => {
+    setProgress(0);
     const token = await AsyncStorage.getItem('userToken');
     setIsLoading(true);
     setModalVisible(true);
     try {
       const db = await connectDatabase();
-      
 
       const res = await fetch(`${base_url}/abimes/list_produits`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       });
 
       if (res.status !== 200) {
         setIsLoading(false);
         setModalVisible(false);
-        Alert.alert('Erreur', 'Une erreur est survenue lors de la synchronisation des produits');
+        Alert.alert(
+          'Erreur',
+          'Une erreur est survenue lors de la synchronisation des produits',
+        );
         return;
       }
 
       const json = await res.json();
       const totalProducts = json.length;
-      let insertedCount = 0;
-      const resDelete = await deleteAllProducts(db);
-      
-      
 
-      for (const product of json) {
-        try {
-          const result = await createProduct(db, product);
-          console.log(result);
-          insertedCount++;
-          setProgress(insertedCount / totalProducts);
-        } catch (error) {
-          console.log(error);
-        }
+      // Batch delete and insert
+      await deleteAllProducts(db);
+
+      const chunkSize = 1000; // Number of items to insert per transaction
+      for (let i = 0; i < totalProducts; i += chunkSize) {
+        const chunk = json.slice(i, i + chunkSize);
+        await Promise.all(chunk.map(product => createProduct(db, product).then(res => {
+          console.log(res);
+        }).catch(err => {
+          console.error(err);
+        })));
+
+        setProgress((i + chunk.length) / totalProducts);
       }
 
       setIsLoading(false);
@@ -61,15 +72,77 @@ const Sync = ({route, navigation}) => {
     } catch (error) {
       setIsLoading(false);
       setModalVisible(false);
-      Alert.alert('Erreur', 'Une erreur est survenue lors de la synchronisation des produits');
+      Alert.alert(
+        'Erreur',
+        'Une erreur est survenue lors de la synchronisation des produits',
+      );
+      console.log(error);
+    }
+  };
+
+  const handleSyncFDX = async () => {
+    setProgress(0);
+    const token = await AsyncStorage.getItem('userToken');
+    setIsLoading(true);
+    setModalVisible(true);
+
+    try {
+      const db = await connectDatabase();
+      const res = await fetch(`${base_url}/abimes/list_fdx`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (res.status !== 200) {
+        setIsLoading(false);
+        setModalVisible(false);
+        Alert.alert(
+          'Erreur',
+          'Une erreur est survenue lors de la synchronisation des FDX',
+        );
+        return;
+      }
+
+      const json = await res.json();
+      const totalFDX = json.length;
+
+      // Batch delete and insert
+      await deleteAllFDX(db);
+
+      const chunkSize = 1000; // Number of items to insert per transaction
+      for (let i = 0; i < totalFDX; i += chunkSize) {
+        const chunk = json.slice(i, i + chunkSize);
+        await Promise.all(
+          chunk.map(fdx =>
+            createFDX(db, fdx).then(res => {
+              console.log(res);
+            }).catch(err => {
+              console.error(err);
+            })
+          ),
+        ); 
+        setProgress((i + chunk.length) / totalFDX);
+      }
+
+      setIsLoading(false);
+      setModalVisible(false);
+      Alert.alert('Succès', 'Synchronisation des FDX réussie!');
+    } catch (error) {
+      setIsLoading(false);
+      setModalVisible(false);
+      Alert.alert(
+        'Erreur',
+        'Une erreur est survenue lors de la synchronisation des FDX',
+      );
       console.log(error);
     }
   };
 
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener(state => {
-      console.log('Connection type', state.type);
-      console.log('Is connected?', state.isConnected);
       if (!state.isConnected) {
         Alert.alert('Erreur', 'Pas de connexion internet');
         navigation.goBack();
@@ -80,54 +153,6 @@ const Sync = ({route, navigation}) => {
       unsubscribe();
     };
   }, []);
-  const handleSyncFDX = async () => {
-    const token = await AsyncStorage.getItem('userToken');
-    setIsLoading(true);
-    setModalVisible(true);
-
-    try {
-        const db = await connectDatabase();
-        const res = await fetch(`${base_url}/abimes/list_fdx`, {
-            method: 'GET',
-            headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-            }
-        });
-    
-        if (res.status !== 200) {
-            setIsLoading(false);
-            setModalVisible(false);
-            Alert.alert('Erreur', 'Une erreur est survenue lors de la synchronisation des FDX');
-            return;
-        }
-    
-        const json = await res.json();
-        const totalFDX = json.length;
-        console.log(json.length);
- 
-        let insertedCount = 0;
-        await deleteAllFDX(db);
-    
-        for (const fdx of json) {
-            try {
-            result = await createFDX(db, fdx);
-            console.log(result);
-            insertedCount++;
-            setProgress(insertedCount / totalFDX);
-            } catch (error) {
-            console.log(error);
-            }
-        }
-    
-        setIsLoading(false);
-        setModalVisible(false);
-        Alert.alert('Succès', 'Synchronisation des FDX réussie!');
-    }catch(error) {
-      console.log(error);
-    }
-
-  };
 
   return (
     <View style={styles.container}>
@@ -143,14 +168,15 @@ const Sync = ({route, navigation}) => {
         transparent={true}
         animationType="slide"
         visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
+        onRequestClose={() => setModalVisible(false)}>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <Text style={styles.modalText}>Synchronisation en cours...</Text>
             <Text style={styles.modalText}>{Math.round(progress * 100)}%</Text>
             <Bar progress={progress} width={200} color="#d32f2f" />
-            <Text style={styles.smallText}>Merci de ne pas quitter cette ecran</Text>
+            <Text style={styles.smallText}>
+              Merci de ne pas quitter cette ecran
+            </Text>
           </View>
         </View>
       </Modal>

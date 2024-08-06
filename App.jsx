@@ -12,6 +12,7 @@ import { getProducts } from './db/produits';
 import Abimes2 from './screens/Abimes/Abimes2';
 import Abimes1 from './screens/Abimes/Abimes1';
 import Abimes3 from './screens/Abimes/Abimes3';
+import ListAbimes from './screens/Abimes/ListAbimes';
 
 
 const Stack = createNativeStackNavigator();
@@ -105,6 +106,21 @@ function App() {
           component={Sync}
           options={{
             title: 'Mis à jour',
+            headerStyle: {
+              backgroundColor: '#d32f2f',
+            },
+            headerTintColor: '#fff',
+            headerTitleStyle: {
+              fontWeight: 'bold',
+            },
+
+          }}
+        />
+        <Stack.Screen
+          name="ListAbimes"
+          component={ListAbimes}
+          options={{
+            title: 'Liste des abimes',
             headerStyle: {
               backgroundColor: '#d32f2f',
             },

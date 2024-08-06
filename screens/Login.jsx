@@ -62,7 +62,7 @@ const Login = ({route,navigation}) => {
     setSubmitting(true);
     try {
       const response = await fetch(
-        `http://10.0.0.250:8075/tbg/suivi_fdx/api/authentification/login`,
+        `https://tbg.comarbois.ma/suivi_fdx/api/authentification/login`,
         {
           method: 'POST',
           headers: {
