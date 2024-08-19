@@ -1,12 +1,11 @@
 import {Alert, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import React, {useEffect, useState} from 'react';
 import {Dropdown} from 'react-native-element-dropdown';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import {connectDatabase} from '../db/db';
+
 
 const movements = [
-  {id: 1, nom: 'Entré', val : 'me'},
-  {id: 2, nom: 'Sorti', val : 'ms'},
+  {id: 1, nom: 'Recenser', val : 'me'},
+  {id: 2, nom: 'Livrer', val : 'ms'},
 ];
 
 const depots = [
@@ -14,6 +13,7 @@ const depots = [
   {id: 17, nom: 'ZENATA'},
   {id: 12, nom: 'AGENCE AGADIR'},
   {id: 15, nom: 'TACHFINE'},
+  {id: 21, nom: 'AGENCE AGADIR'},
 ];
 
 const Abimes1 = ({route, navigation}) => {

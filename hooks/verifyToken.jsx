@@ -5,23 +5,6 @@ export const verifyToken = async () => {
   if (token === null || token === undefined || token === "") {
     return false;
   }
-  
-  const res = await fetch(
-    "https://tbg.comarbois.ma/suivi_fdx/api/authentification/verifyToken",
-    {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`,
-      },
-    }
-
-  );
-
-  if (res.status !== 200) {
-    return false;
-  }
-  const json = await res.json();
-  return json;
+  return true;
 
 };

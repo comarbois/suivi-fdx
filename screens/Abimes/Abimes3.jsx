@@ -45,15 +45,13 @@ const Abimes3 = ({route, navigation}) => {
   const [idProduit, setIdProduit] = useState(0);
   const [fdx, setFdx] = useState('');
   const [quantite, setQuantite] = useState(0);
-  const [unite, setUnite] = useState('');
+  const [unite, setUnite] = useState('P');
   const [user, setUser] = useState({});
   const [loading, setLoading] = useState(false);
   const [unites, setUnites] = useState([]);
   const [motif, setMotif] = useState('');
   const [commentaire, setCommentaire] = useState('');
   const [bl, setBl] = useState('');
-
-
 
   const fetchProducts = async () => {
     try {
@@ -149,35 +147,27 @@ const Abimes3 = ({route, navigation}) => {
 
       try {
         const token = await AsyncStorage.getItem('userToken');
-        const response = await fetch(
-          `${base_url}/abimes/ajout`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify(formData),
+        const response = await fetch(`${base_url}/abimes/ajout`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
           },
-
-        );
+          body: JSON.stringify(formData),
+        });
 
         const json = await response.json();
-        if(response.status === 200){
-          if(json.erreur){
+        if (response.status === 200) {
+          if (json.erreur) {
             console.error(json.erreur);
-          }else{
+          } else {
             data.envoye = 'oui';
           }
         }
-
       } catch (error) {
         console.error(error);
       }
-
     }
-
-
 
     const db = await connectDatabase();
     try {
@@ -189,7 +179,12 @@ const Abimes3 = ({route, navigation}) => {
         await saveImages(image, lastId);
       }
       await commitTransaction(db);
-      Alert.alert('Succes', data.envoye == 'oui' ? 'Synchronisation reussie' : 'Enregistrement Local , Synchronisation en attente');
+      Alert.alert(
+        'Succes',
+        data.envoye == 'oui'
+          ? 'Synchronisation reussie'
+          : 'Enregistrement Local , Synchronisation en attente',
+      );
       navigation.replace('ListAbimes');
     } catch (err) {
       Alert.alert('Erreur', "Une erreur est survenue lors de l'enregistrement");
@@ -357,6 +352,7 @@ const Abimes3 = ({route, navigation}) => {
               onChange={value => setUnite(value.unite)}
               placeholder="Selectionner une unite"
               style={styles.dropdown}
+              value={'P'}
             />
 
             <Text style={styles.label}>Quantite</Text>
@@ -366,11 +362,15 @@ const Abimes3 = ({route, navigation}) => {
               onChangeText={value => setQuantite(value)}
             />
 
-            <Text style={styles.label}>Bon de livraison</Text>
-            <TextInput
-              style={styles.TextInput}
-              onChangeText={value => setBl(value)}
-            />
+            {filters.movement == 'ms' && (
+              <>
+                <Text style={styles.label}>Bon de livraison</Text>
+                <TextInput
+                  style={styles.TextInput}
+                  onChangeText={value => setBl(value)}
+                />
+              </>
+            )}
 
             <Text style={styles.label}>Motif</Text>
             <Dropdown

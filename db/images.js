@@ -16,6 +16,18 @@ export const insertCasseImage = async (db, casse) => {
     }
 }
 
+export const deleteCasseImage = async (db, idCasse) => {
+    const query = `DELETE FROM casse_images`;
+    try {
+        const result = await db.executeSql(query);
+        return result;
+    } catch (error) {
+        console.error(error);
+        throw new Error(error);
+    }
+}
+
+
 
 export const getCassesImages = async (db, idCasse) => {
     const query = `SELECT * FROM casse_images WHERE idCasse = ${idCasse}`;

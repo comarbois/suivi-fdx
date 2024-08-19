@@ -30,8 +30,8 @@ export const insertCasse = async (db, casse) => {
         casse.commentaire,
         casse.idCreate,
         casse.dateCreate,
-        0,
-        '',
+        casse.idModif,
+        casse.dateModif,
         casse.envoye,
         ]);
         return result;
@@ -40,6 +40,18 @@ export const insertCasse = async (db, casse) => {
         throw new Error(error);
     }
 }
+
+export const deleteAllCasses = async db => {    
+    const query = `DELETE FROM casses_mouvements`;
+    try {
+        const result = await db.executeSql(query);
+        return result;
+    } catch (error) {
+        console.error(error);
+        throw new Error(error);
+    }
+}
+
 
 export const getCasses = async db => {
     const query = `SELECT c.*, p.categorie , p.famille, p.fournisseur, p.designation FROM casses_mouvements c LEFT JOIN list_produits_inv p ON c.idProduit = p.idProduit ORDER BY c.dateCreate DESC`;

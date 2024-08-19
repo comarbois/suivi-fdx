@@ -31,8 +31,10 @@ const ListAbimes = ({route, navigation}) => {
     try {
       const db = await connectDatabase();
       const abimes = await getCasses(db);
+     
       for (const abime of abimes) {
         const abimeImages = await getCassesImages(db, abime.id);
+        // console.log(abimeImages);
         abime.images = [];
         for (const image of abimeImages) {
           if (image.uri) {
@@ -48,18 +50,19 @@ const ListAbimes = ({route, navigation}) => {
   };
   const checkInternet = async () => {
     const state = await NetInfo.fetch();
-    return state.isConnected;
+    return state.isConnected && state.isInternetReachable;
   };
 
   const renderItem = ({item}) => {
     return (
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>{item.mouvement}</Text>
+        <Text style={styles.cardTitle}>{item.mouvement == 'me' ? 'Recenser' : 'Livrer'}</Text>
         <Text>{item.designation}</Text>
-        <Text>{item.quantite}</Text>
+        { item.fdx && <Text>FDX {item.fdx}</Text>}
+        <Text>{item.quantite} {item.unite}</Text>
         <Text
           style={item.envoye === 'oui' ? {color: 'green'} : {color: 'orange'}}>
-          {item.envoye}
+          {item.envoye === 'oui' ? 'Envoyé' : 'Non envoyé'}
         </Text>
         <View style={styles.cardBtns}>
           <TouchableOpacity onPress={() => openModal(item.images)}>
@@ -168,7 +171,7 @@ const ListAbimes = ({route, navigation}) => {
   useEffect(() => {
     const backAction = () => {
       // Custom back handler logic
-      navigation.navigate('Home'); // Navigate to the Home screen
+      navigation.replace('Home'); // Navigate to the Home screen
       return true; // Prevent default behavior (exit app)
     };
 

@@ -10,10 +10,13 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {Bar} from 'react-native-progress';
-import {connectDatabase} from '../db/db';
+import {beginTransaction, commitTransaction, connectDatabase, rollbackTransaction} from '../db/db';
 import {createProduct, deleteAllProducts} from '../db/produits';
 import {createFDX, deleteAllFDX} from '../db/fdx';
 import NetInfo from '@react-native-community/netinfo';
+import { deleteAllCasses, insertCasse } from '../db/casses';
+import { deleteCasseImage, insertCasseImage } from '../db/images';
+import RNFS from 'react-native-fs';
 
 const base_url = 'https://tbg.comarbois.ma/suivi_fdx/api';
 
@@ -141,9 +144,118 @@ const Sync = ({route, navigation}) => {
     }
   };
 
+  const handleSyncAbimes = async () => { 
+    setProgress(0);
+    const token = await AsyncStorage.getItem('userToken');
+    setIsLoading(true);
+    setModalVisible(true);
+    const db = await connectDatabase();
+
+    try {
+      const res = await fetch(`https://tbg.comarbois.ma/suivi_fdx/api/abimes/list_abimes`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (res.status !== 200) {
+        setIsLoading(false);
+        setModalVisible(false);
+        Alert.alert(
+          'Erreur',
+          'Une erreur est survenue lors de la synchronisation des Abimés',
+        );
+        return;
+      }
+
+      const json = await res.json();
+      const totalAbimes = json.length;
+
+      await beginTransaction(db);
+      await deleteAllCasses(db);
+      await deleteCasseImage(db);
+
+      const chunkSize = 1000; // Number of items to insert per transaction
+      for (let i = 0; i < totalAbimes; i += chunkSize) {
+        const chunk = json.slice(i, i + chunkSize);
+        await Promise.all(
+          chunk.map(abime =>
+            insertCasse(db, abime).then(res => {
+              abime.images.map(async image => {
+                const imageUrl = `https://tbg.comarbois.ma/data/casses/${image.fichier}`;
+                const localPath = `${RNFS.DocumentDirectoryPath}/${image.fichier}`;
+    
+                try {
+                  const downloadedPath = await downloadImage(imageUrl, localPath);
+                  const resImg = await insertCasseImage(db, {
+                    idCasse: res[0].insertId,
+                    uri: downloadedPath,
+                  });
+                  console.log(resImg);
+                } catch (error) {
+                  console.error('Error inserting image:', error);
+                }
+              })
+            }).catch(err => {
+              console.error(err);
+            })
+          ),
+        );
+        setProgress((i + chunk.length) / totalAbimes);
+      }
+
+      await commitTransaction(db);
+      setIsLoading(false);
+      setModalVisible(false);
+
+      Alert.alert('Succès', 'Synchronisation des Abimés réussie!');
+
+      
+
+    }catch (error) {
+      setIsLoading(false);
+      setModalVisible(false);
+      await rollbackTransaction(db);
+      Alert.alert(
+        'Erreur',
+        'Une erreur est survenue lors de la synchronisation des Abimés',
+      );
+      console.log(error);
+    }
+
+
+  };
+
+  const downloadImage = async (url, localPath) => {
+    try {
+      const extention = url.split('.').pop();
+      if (extention !== 'jpg' && extention !== 'jpeg' && extention !== 'png') {
+        throw new Error('Invalid image format');
+        return;
+      }
+      const result = await RNFS.downloadFile({
+        fromUrl: url,
+        toFile: localPath,
+      }).promise;
+
+
+  
+      if (result.statusCode === 200) {
+        return localPath;
+      } else {
+        throw new Error('Failed to download image');
+      }
+    } catch (error) {
+      console.error('Error downloading image:', error);
+      throw error;
+    }
+  };
+
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener(state => {
-      if (!state.isConnected) {
+      if (!state.isConnected || !state.isInternetReachable) {
         Alert.alert('Erreur', 'Pas de connexion internet');
         navigation.goBack();
       }
@@ -164,6 +276,12 @@ const Sync = ({route, navigation}) => {
         <Image style={styles.image} source={require('../assets/sync.png')} />
         <Text style={styles.text}>Mis à jour FDX</Text>
       </TouchableOpacity>
+      <TouchableOpacity style={styles.button} onPress={handleSyncAbimes}>
+        <Image style={styles.image} source={require('../assets/sync.png')} />
+        <Text style={styles.text}>Mis à jour Abimés</Text>
+      </TouchableOpacity>
+      
+
       <Modal
         transparent={true}
         animationType="slide"
